@@ -21,6 +21,8 @@ class Storage(dict):
         Traceback (most recent call last):
             ...
         AttributeError: 'a'
+
+    dict 子类，支持属性式访问其 key (`obj.key`)，KeyError => AttributeError
     """
 
     def __getattr__(self, key):
@@ -98,16 +100,20 @@ def model2dict(model, datetime_format=None):
 def dict_project(data, map_rulls={}):
     """
     字典投影，支持取 data 的子集和改名。只想投影而不想改名的，写个 1 就行，eg：
-        >>> data
-        {'a': 1,
-         'b': 2,
-         'c': 3}
-        >>> map_rulls
-        {'a': 'x',
-         'c': 1}
+        >>> data = {
+                'a': 'value of a',
+                'b': 'value of b',
+                'c': 'value of c',
+            }
+        >>> map_rulls = {
+                'a': 'x',
+                'c': 1
+            }
         >>> dict_project(data, map_rulls)
-        {'x': 1,
-         'c': 3}
+        {
+            'x': 'value of a',
+            'c': 'value of c'
+        }
     """
     if isinstance(data, dict):
         data = Storage({map_rulls[k] if isinstance(map_rulls[k], basestring) else k: data[k] for k in data if k in map_rulls})
