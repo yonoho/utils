@@ -6,6 +6,10 @@ except ImportError:
     gevent = None
     copyright = None
 
+__all__ = [
+    'i_have_a_dream',
+]
+
 
 def i_have_a_dream(func, *args, **kwargs):
     """

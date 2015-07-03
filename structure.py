@@ -4,6 +4,15 @@ import datetime
 from copy import deepcopy
 from numbers import Number
 
+__all__ = [
+    'Storage',
+    'recursively_json_loads',
+    'model2dict',
+    'dict_project',
+    'group_by_attr',
+    'traversal_generator',
+]
+
 
 class Storage(dict):
     """
@@ -44,26 +53,26 @@ class Storage(dict):
         return '<Storage ' + dict.__repr__(self) + '>'
 
 
-def recursive_json_loads(data):
+def recursively_json_loads(data):
     """
     将 json 字符串迭代处理为 Python 对象
         >>> a = '[{"foo": 1}]'
-        >>> b = recursive_json_loads(a)
+        >>> b = recursively_json_loads(a)
         >>> b[0].foo
         >>> 1
     """
     if isinstance(data, list):
-        return [recursive_json_loads(i) for i in data]
+        return [recursively_json_loads(i) for i in data]
     elif isinstance(data, tuple):
-        return tuple([recursive_json_loads(i) for i in data])
+        return tuple([recursively_json_loads(i) for i in data])
     elif isinstance(data, dict):
-        return Storage({recursive_json_loads(k): recursive_json_loads(data[k]) for k in data.keys()})
+        return Storage({recursively_json_loads(k): recursively_json_loads(data[k]) for k in data.keys()})
     else:
         try:
             obj = json.loads(data)
             if obj == data:
                 return data
-            return recursive_json_loads(obj)
+            return recursively_json_loads(obj)
         except:
             return data
 
@@ -122,3 +131,34 @@ def dict_project(data, map_rulls={}):
     else:
         raise ValueError('无法处理对象: %s' % str(data))
     return data
+
+
+def group_by_attr(obj_list, attr):
+    """
+    按属性分组，返回以属性值为键，以 obj list 为值的字典
+    """
+    groups = {}
+    for obj in obj_list:
+        attr_value = getattr(obj, attr, None)
+        groups[attr_value] = groups.get(attr_value, []) + [obj]
+    return groups
+
+
+def traversal_generator(*iterables):
+    """
+    通过返回一个 generator, 可以从 n 个 iterables 中轮流取元素，保证取完
+    """
+    iterables = list(iterables)
+    for i in range(len(iterables)):
+        if not hasattr(iterables[i], 'next'):
+            iterables[i] = iter(iterables[i])
+    done = False
+    while not done:
+        done = True
+        for i in range(len(iterables)):
+            try:
+                yield next(iterables[i])
+                done = False
+            except StopIteration:
+                pass
+    return
