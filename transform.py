@@ -110,10 +110,7 @@ def traversal_generator(*iterables):
     """
     通过返回一个 generator, 可以从 n 个 iterables 中轮流取元素，保证取完
     """
-    iterables = list(iterables)
-    for i in range(len(iterables)):
-        if not hasattr(iterables[i], 'next'):
-            iterables[i] = iter(iterables[i])
+    iterables = [i if hasattr(i, 'next') else iter(i) for i in iterables]
     done = False
     while not done:
         done = True
