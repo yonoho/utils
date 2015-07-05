@@ -12,6 +12,8 @@ __all__ = [
     'dict_project',
     'group_by_attr',
     'traversal_generator',
+    'check_bin',
+    'update_bin',
 ]
 
 
@@ -121,3 +123,33 @@ def traversal_generator(*iterables):
             except StopIteration:
                 pass
     return
+
+
+def check_bin(number, index):
+    """
+    用于某些二进制标志位的场景
+    返回一个 int 类型变量的某一二进制位的值，index 从 1 开始，即
+    >>> check_bin(2, 1)
+    >>> 0
+    >>> check_bin(2, 2)
+    >>> 1
+    """
+    try:
+        return bin(number)[2:][-index]
+    except IndexError:
+        return 0
+
+
+def update_bin(number, index, value):
+    """
+    用于某些二进制标志位的场景
+    将一个 int 类型变量的二进制数的第 index 位，置为 value 并返回新变量，如
+    >>> update_bin(2, 2, 0)
+    >>> 0
+    >>> update_bin(2, 3, 1)
+    >>> 6
+    """
+    if value:
+        return number | int('1' + '0'*(index-1), 2)
+    else:
+        return number & int('0' + '1'*(index-1), 2)
