@@ -141,7 +141,7 @@ def check_bin(number, index):
 def update_bin(number, index, value):
     """
     用于某些二进制标志位的场景
-    将一个 int 类型变量的二进制数的第 index 位，置为 value 并返回新变量，如
+    将一个 int 类型变量的二进制数的第 index 位，置为 value 并返回新变量，index 从 1 开始, 如
     >>> update_bin(2, 2, 0)
     0
     >>> update_bin(2, 3, 1)
@@ -157,7 +157,7 @@ def filter_bin(length, index_pairs):
     """
     用于某些二进制标志位的场景
     index_pairs: {index: value,}
-    返回 length 长度内第 index 位值为 value 的所有可能的 int 的 list, e.g.
+    返回 length 长度内第 index 位值为 value 的所有可能的 int 的 list, index 从 1 开始, e.g.
     >>> filter_bin(3, {1: 1})
     [1, 3, 5, 7]
     >>> filter_bin(3, {1: 1, 2: 0})
