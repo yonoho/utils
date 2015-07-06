@@ -21,10 +21,10 @@ __all__ = [
 def recursively_json_loads(data):
     """
     将 json 字符串迭代处理为 Python 对象
-        >>> a = '[{"foo": 1}]'
-        >>> b = recursively_json_loads(a)
-        >>> b[0].foo
-        >>> 1
+    >>> a = '[{"foo": 1}]'
+    >>> b = recursively_json_loads(a)
+    >>> b[0].foo
+    1
     """
     if isinstance(data, list):
         return [recursively_json_loads(i) for i in data]
@@ -74,20 +74,17 @@ def model2dict(model, datetime_format=None):
 def dict_project(data, map_rulls={}):
     """
     字典投影，支持取 data 的子集和改名。只想投影而不想改名的，写个 1 就行，eg：
-        >>> data = {
-                'a': 'value of a',
-                'b': 'value of b',
-                'c': 'value of c',
-            }
-        >>> map_rulls = {
-                'a': 'x',
-                'c': 1
-            }
-        >>> dict_project(data, map_rulls)
-        {
-            'x': 'value of a',
-            'c': 'value of c'
-        }
+    >>> data = {
+    ...     'a': 'value of a',
+    ...     'b': 'value of b',
+    ...     'c': 'value of c',
+    ... }
+    >>> map_rulls = {
+    ...     'a': 'x',
+    ...     'c': 1
+    ... }
+    >>> dict_project(data, map_rulls)
+    <Storage {'x': 'value of a', 'c': 'value of c'}>
     """
     if isinstance(data, dict):
         data = Storage({map_rulls[k] if isinstance(map_rulls[k], basestring) else k: data[k] for k in data if k in map_rulls})
@@ -131,12 +128,12 @@ def check_bin(number, index):
     用于某些二进制标志位的场景
     返回一个 int 类型变量的某一二进制位的值，index 从 1 开始，即
     >>> check_bin(2, 1)
-    >>> 0
+    0
     >>> check_bin(2, 2)
-    >>> 1
+    1
     """
     try:
-        return bin(number)[2:][-index]
+        return int(bin(number)[2:][-index])
     except IndexError:
         return 0
 
@@ -146,9 +143,9 @@ def update_bin(number, index, value):
     用于某些二进制标志位的场景
     将一个 int 类型变量的二进制数的第 index 位，置为 value 并返回新变量，如
     >>> update_bin(2, 2, 0)
-    >>> 0
+    0
     >>> update_bin(2, 3, 1)
-    >>> 6
+    6
     """
     if value:
         return number | int('1' + '0'*(index-1), 2)
@@ -160,22 +157,29 @@ def filter_bin(length, index_pairs):
     """
     用于某些二进制标志位的场景
     index_pairs: {index: value,}
-    返回 length 长度内第 index 位值为 value 的所有可能的 int list, e.g.
+    返回 length 长度内第 index 位值为 value 的所有可能的 int 的 list, e.g.
     >>> filter_bin(3, {1: 1})
-    >>> [1, 3, 5, 7]
+    [1, 3, 5, 7]
+    >>> filter_bin(3, {1: 1, 2: 0})
+    [1, 5]
+    >>> filter_bin(3, {1: 0, 2: 1})
+    [2, 6]
     """
     ret = []
     for number in range(int('1'*length, 2) + 1):
         match = True
         for index in index_pairs:
-            if len(bin(number)) - index >= 2 and int(bin(number)[-index]) ^ index_pairs[index]:
-                match = False
+            if len(bin(number)) - index >= 2:  # 位数够
+                if int(bin(number)[-index]) ^ index_pairs[index]:
+                    match = False
+            else:  # 位数不够
+                if index_pairs[index]:
+                    match = False
         if match:
             ret.append(number)
     return ret
 
 
 if __name__ == '__main__':
-    # tests
-    import unittest
-    pass
+    import doctest
+    doctest.testmod(verbose=True)
