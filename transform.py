@@ -14,6 +14,7 @@ __all__ = [
     'traversal_generator',
     'check_bin',
     'update_bin',
+    'filter_bin',
 ]
 
 
@@ -153,3 +154,28 @@ def update_bin(number, index, value):
         return number | int('1' + '0'*(index-1), 2)
     else:
         return number & int('0' + '1'*(index-1), 2)
+
+
+def filter_bin(length, index_pairs):
+    """
+    用于某些二进制标志位的场景
+    index_pairs: {index: value,}
+    返回 length 长度内第 index 位值为 value 的所有可能的 int list, e.g.
+    >>> filter_bin(3, {1: 1})
+    >>> [1, 3, 5, 7]
+    """
+    ret = []
+    for number in range(int('1'*length, 2) + 1):
+        match = True
+        for index in index_pairs:
+            if len(bin(number)) - index >= 2 and int(bin(number)[-index]) ^ index_pairs[index]:
+                match = False
+        if match:
+            ret.append(number)
+    return ret
+
+
+if __name__ == '__main__':
+    # tests
+    import unittest
+    pass
