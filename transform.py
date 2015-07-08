@@ -138,19 +138,21 @@ def check_bin(number, index):
         return 0
 
 
-def update_bin(number, index, value):
+def update_bin(number, index_pairs):
     """
     用于某些二进制标志位的场景
     将一个 int 类型变量的二进制数的第 index 位，置为 value 并返回新变量，index 从 1 开始, 如
-    >>> update_bin(2, 2, 0)
+    >>> update_bin(2, {2: 0})
     0
-    >>> update_bin(2, 3, 1)
+    >>> update_bin(2, {3: 1})
     6
     """
-    if value:
-        return number | int('1' + '0'*(index-1), 2)
-    else:
-        return number & int('0' + '1'*(index-1), 2)
+    for index, value in index_pairs.items():
+        if value:
+            number = number | int('1' + '0'*(index-1), 2)
+        else:
+            number = number & int('0' + '1'*(index-1), 2)
+    return number
 
 
 def filter_bin(length, index_pairs):
