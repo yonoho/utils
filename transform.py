@@ -8,7 +8,7 @@ from .structure import Storage
 
 __all__ = [
     'recursively_json_loads',
-    'model2dict',
+    'obj2dict',
     'dict_project',
     'group_by_attr',
     'traversal_generator',
@@ -41,7 +41,7 @@ def recursively_json_loads(data):
             return data
 
 
-def model2dict(model, datetime_format=None):
+def obj2dict(model, datetime_format=None):
     """
     本函数用于使对象可 json 序列化，且返回的字典都是新的（deepcopy）
     """
@@ -58,14 +58,14 @@ def model2dict(model, datetime_format=None):
                 model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat(' ')
             # 递归
             else:
-                model[k] = model2dict(model[k], datetime_format)
+                model[k] = obj2dict(model[k], datetime_format)
         for k in to_pop:
             model.pop(k)
         return model
     elif hasattr(model, '__dict__') and not isinstance(model, Number):
-        return model2dict(model.__dict__, datetime_format)
+        return obj2dict(model.__dict__, datetime_format)
     elif isinstance(model, (list, tuple)):
-        return [model2dict(m, datetime_format) for m in model]
+        return [obj2dict(m, datetime_format) for m in model]
     else:
         return model
 
