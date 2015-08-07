@@ -47,6 +47,9 @@ def transtime(from_obj, to_type, dt_format=None):
     >>> transtime(dt, str, '%Y-%m-%d %H:%M:%S')
     '2010-01-01 10:10:10'
 
+    >>> transtime(transtime(dt, str), datetime.datetime)
+    datetime.datetime(2010, 1, 1, 10, 10, 10, 555)
+
     >>> transtime(dt, float)
     1262311810.555
 
