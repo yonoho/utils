@@ -55,8 +55,10 @@ def obj2dict(model, datetime_format=None):
                 to_pop.append(k)
                 continue
             # 转换
-            elif isinstance(model[k], datetime.datetime):
+            elif isinstance(model[k], datetime.date):
                 model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat(' ')
+            elif isinstance(model[k], datetime.time):
+                model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat()
             # 递归
             else:
                 model[k] = obj2dict(model[k], datetime_format)
