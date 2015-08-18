@@ -4,29 +4,16 @@ import datetime
 import re
 from numbers import Number
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 __all__ = [
-    'check_format',
     'transtime',
 ]
 
-RE_FORMAT = {
-    re.compile('^\d{2}-\d{1,2}-\d{1,2}$'): '%Y-%m-%d',
-    re.compile('^\d{4}-\d{1,2}-\d{1,2}$'): '%Y-%m-%d',
-    re.compile('\d{1,2}:\d{1,2}:\d{1,2}$'): '%H:%M:%S',
-    re.compile('\d{1,2}:\d{1,2}$'): '%H:%M',
-    re.compile('^\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}$'): '%Y-%m-%d %H:%M:%S',
-    re.compile('^\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}\.\d{6}$'): '%Y-%m-%d %H:%M:%S.%f',
-    re.compile('^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{1,2}:\d{1,2}\.\d{6}$'): '%Y-%m-%dT%H:%M:%S.%f',
-}
-
-
-def check_format(dt_str):
-    """
-    简单尝试判断 format
-    """
-    for pattern in RE_FORMAT:
-        if re.match(pattern, dt_str):
-            return RE_FORMAT[pattern]
+DT_PATTERN = re.compile('^((?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2}))?(?P<sep> |T)?((?P<hour>\d{1,2}):(?P<minute>\d{1,2})(:(?P<second>\d{1,2}))?)?(\.(?P<microsecond>\d{1,6}))?$')
 
 
 def transtime(from_obj, to_type, dt_format=None):
@@ -46,6 +33,18 @@ def transtime(from_obj, to_type, dt_format=None):
 
     >>> transtime(dt, str, '%Y-%m-%d %H:%M:%S')
     '2010-01-01 10:10:10'
+
+    >>> transtime('2010-01-01', 'date')
+    datetime.date(2010, 1, 1)
+
+    >>> transtime('09:00:01', 'time')
+    datetime.time(9, 0, 1)
+
+    >>> transtime('09:00', 'time')
+    datetime.time(9, 0)
+
+    >>> transtime('2010-01-01 09:00:00', 'datetime')
+    datetime.datetime(2010, 1, 1, 9, 0)
 
     >>> transtime(transtime(dt, str), datetime.datetime)
     datetime.datetime(2010, 1, 1, 10, 10, 10, 555)
@@ -69,6 +68,10 @@ def transtime(from_obj, to_type, dt_format=None):
     if isinstance(to_type, str):
         if to_type == 'datetime':
             to_type = datetime.datetime
+        elif to_type == 'date':
+            to_type = datetime.date
+        elif to_type == 'time':
+            to_type = datetime.time
         elif to_type == 'timedelta':
             to_type = datetime.timedelta
         elif to_type == 'timestamp':
@@ -85,11 +88,21 @@ def transtime(from_obj, to_type, dt_format=None):
             return from_obj.strftime(dt_format) if dt_format else from_obj.isoformat(' ')
         else:
             raise TypeError('Unsupported to_type: %s' % str(to_type))
-    elif isinstance(from_obj, str):
-        dt_format = dt_format or check_format(from_obj)
-        if not dt_format:
-            raise ValueError('no datetime format provided.')
-        return transtime(datetime.datetime.strptime(from_obj, dt_format), to_type, dt_format)
+    elif isinstance(from_obj, (str, basestring)):
+        match = re.match(DT_PATTERN, from_obj)
+        if not match:
+            raise ValueError('Unknown from_obj format:%s' % from_obj)
+        dt_dict = match.groupdict()
+        sep = dt_dict.pop('sep')
+        dt_dict.update({k: int(v) for k, v in dt_dict.items() if v})
+        if sep:
+            return datetime.datetime(**{k: v for k, v in dt_dict.items() if v})
+        elif dt_dict['day']:
+            return datetime.date(**{k: dt_dict[k] for k in ('year', 'month', 'day') if dt_dict[k]})
+        elif dt_dict['hour']:
+            return datetime.time(**{k: dt_dict[k] for k in ('hour', 'minute', 'second', 'microsecond') if dt_dict[k]})
+        else:
+            raise ValueError('Unable to parse the datetime string:%s' % from_obj)
     elif isinstance(from_obj, datetime.timedelta):
         if issubclass(to_type, Number):  # timedelta -> seconds
             return to_type(from_obj.total_seconds())

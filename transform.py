@@ -6,6 +6,11 @@ from numbers import Number
 
 from .structure import Storage
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 __all__ = [
     'recursively_json_loads',
     'obj2dict',
@@ -85,10 +90,14 @@ def dict_project(data, map_rulls={}):
     ... }
     >>> map_rulls = {
     ...     'a': 'x',
+    ... }
+    >>> dict_project(data, map_rulls)
+    <Storage {'x': 'value of a'}>
+    >>> map_rulls = {
     ...     'c': 1
     ... }
     >>> dict_project(data, map_rulls)
-    <Storage {'x': 'value of a', 'c': 'value of c'}>
+    <Storage {'c': 'value of c'}>
     """
     if isinstance(data, dict):
         data = Storage({map_rulls[k] if isinstance(map_rulls[k], basestring) else k: data[k] for k in data if k in map_rulls})
