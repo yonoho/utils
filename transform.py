@@ -4,6 +4,11 @@ import datetime
 from copy import deepcopy
 from numbers import Number
 
+try:
+    from pymongo import ObjectId
+except ImportError:
+    ObjectId = None
+
 from .structure import Storage
 
 try:
@@ -47,37 +52,36 @@ def recursively_json_loads(data):
             return data
 
 
-def obj2dict(model, datetime_format=None):
+def obj2dict(obj, datetime_format=None):
     """
     本函数用于使对象可 json 序列化，且返回的字典都是新的（deepcopy）
     """
-    if isinstance(model, dict):
-        model = Storage(deepcopy(model))
+    # iter collection
+    if isinstance(obj, dict):
+        return Storage({obj2dict(k, datetime_format): obj2dict(v, datetime_format) for k, v in obj.items()})
+    elif isinstance(obj, (list, tuple)):
+        return [obj2dict(m, datetime_format) for m in obj]
+    # json seriable
+    elif isinstance(obj, datetime.datetime):
+        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat(' ')
+    elif isinstance(obj, datetime.date):
+        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat()
+    elif isinstance(obj, datetime.time):
+        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat()
+    elif isinstance(obj, ObjectId):
+        obj = str(obj)
+    # object -> dict
+    elif hasattr(obj, '__dict__') and not isinstance(obj, Number):
+        obj_json = deepcopy(obj.__dict__)
         to_pop = []
-        for k in model:
-            # 过滤
+        for k in obj_json:
             if isinstance(k, basestring) and (k.startswith('_') or k.isupper()):
                 to_pop.append(k)
-                continue
-            # 转换
-            elif isinstance(model[k], datetime.datetime):
-                model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat(' ')
-            elif isinstance(model[k], datetime.date):
-                model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat()
-            elif isinstance(model[k], datetime.time):
-                model[k] = model[k].strftime(datetime_format) if datetime_format else model[k].isoformat()
-            # 递归
-            else:
-                model[k] = obj2dict(model[k], datetime_format)
         for k in to_pop:
-            model.pop(k)
-        return model
-    elif hasattr(model, '__dict__') and not isinstance(model, Number):
-        return obj2dict(model.__dict__, datetime_format)
-    elif isinstance(model, (list, tuple)):
-        return [obj2dict(m, datetime_format) for m in model]
+            obj_json.pop(k)
+        return obj2dict(obj_json, datetime_format)
     else:
-        return model
+        return obj
 
 
 def dict_project(data, map_rulls={}):
