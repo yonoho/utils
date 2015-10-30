@@ -29,7 +29,7 @@ class Storage(dict):
         try:
             return self[key]
         except KeyError as k:
-            raise AttributeError(k)
+            raise AttributeError(k.message)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -38,7 +38,7 @@ class Storage(dict):
         try:
             del self[key]
         except KeyError as k:
-            raise AttributeError(k)
+            raise AttributeError(k.message)
 
     def __repr__(self):
         return '<Storage ' + dict.__repr__(self) + '>'
