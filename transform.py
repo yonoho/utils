@@ -63,13 +63,13 @@ def obj2dict(obj, datetime_format=None):
         return [obj2dict(m, datetime_format) for m in obj]
     # json seriable
     elif isinstance(obj, datetime.datetime):
-        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat(' ')
+        return obj.strftime(datetime_format) if datetime_format else obj.isoformat(' ')
     elif isinstance(obj, datetime.date):
-        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat()
+        return obj.strftime(datetime_format) if datetime_format else obj.isoformat()
     elif isinstance(obj, datetime.time):
-        obj = obj.strftime(datetime_format) if datetime_format else obj.isoformat()
+        return obj.strftime(datetime_format) if datetime_format else obj.isoformat()
     elif isinstance(obj, ObjectId):
-        obj = str(obj)
+        return str(obj)
     # object -> dict
     elif hasattr(obj, '__dict__') and not isinstance(obj, Number):
         obj_json = deepcopy(obj.__dict__)
