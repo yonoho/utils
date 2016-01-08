@@ -46,23 +46,23 @@ def get_subframe(sheet, col_idxs, row_offset, row_limit=None):
     return df
 
 
-def write_excel(file_name, sheets=[]):
-    """sheet is like:
+def write_excel(file_path, sheets={}):
+    """sheets is like:
     {
-        'name': 'sheet1',
-        'data': [[1, 2, 3],
-                 [8, 9, 0]]
+        'sheet1':[[1, 2, 3],
+                  [8, 9, 0]],
+        'sheet2':[[]],...
     }
     """
-    workbook = xlsxwriter.Workbook('%s.xlsx' % file_name)
-    for sheet in sheets:
-        worksheet = workbook.add_worksheet(name=sheet['name'])
-        for i in range(len(sheet['data'])):
-            for j in range(len(sheet['data'][i])):
-                if isinstance(sheet['data'][i][j], Number):
-                    worksheet.write_number(i, j, int(sheet['data'][i][j]))
-                elif isinstance(sheet['data'][i][j], basestring):
-                    worksheet.write_string(i, j, sheet['data'][i][j])
+    workbook = xlsxwriter.Workbook(file_path)
+    for name, data in sheets.items():
+        worksheet = workbook.add_worksheet(name=name)
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                if isinstance(data[i][j], Number):
+                    worksheet.write_number(i, j, int(data[i][j]))
+                elif isinstance(data[i][j], basestring):
+                    worksheet.write_string(i, j, data[i][j])
                 else:
-                    worksheet.write_blank(i, j, sheet['data'][i][j])
+                    worksheet.write_blank(i, j, data[i][j])
     workbook.close()
