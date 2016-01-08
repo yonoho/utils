@@ -13,7 +13,7 @@ except NameError:
     basestring = str
 
 
-def get_sheet_from_file(directory, sheet_idx=None, sheet_name=None):
+def get_sheets_from_file(directory, sheet_idx=None, sheet_name=None):
     """both idx and name could be a list, then a list of sheets will be returned."""
     if sheet_idx is not None:
         if isinstance(sheet_idx, int):
@@ -30,7 +30,8 @@ def get_sheet_from_file(directory, sheet_idx=None, sheet_name=None):
         else:
             raise TypeError('invalid sheet_name: %s' % sheet_name)
     else:
-        raise ValueError('both sheet_idx & sheet_name is None, what do you want?')
+        workbook = xlrd.open_workbook(directory)
+        return get_sheets_from_file(directory, list(range(workbook.nsheets)))
 
 
 def get_subframe(sheet, col_idxs, row_offset, row_limit=None):
