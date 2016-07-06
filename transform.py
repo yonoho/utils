@@ -17,7 +17,7 @@ except NameError:
     basestring = str
 
 __all__ = [
-    'recursively_json_loads',
+    'recur_json_loads',
     'obj2dict',
     'dict_project',
     'group_by_attr',
@@ -28,26 +28,33 @@ __all__ = [
 ]
 
 
-def recursively_json_loads(data):
+def recur_json_loads(data):
     """
-    将 json 字符串迭代处理为 Python 对象
-    >>> a = '[{"foo": 1}]'
-    >>> b = recursively_json_loads(a)
-    >>> b[0].foo
+    将 json 字符串递归处理为 Python 对象，并且转换为 Storage 类型
+    >>> a = '{"foo": 1}'
+    >>> b = recur_json_loads(a)
+    >>> b.foo
     1
+
+    还有一个问题是，json 无法还原字典中 Number 类型的 key，本函数可以.即
+    >>> a = {1: 2}
+    >>> json.loads(json.dumps(a))
+    {'1': 2}
+    >>> recur_json_loads(json.dumps({1: 2}))
+    <Storage {1: 2}>
     """
     if isinstance(data, list):
-        return [recursively_json_loads(i) for i in data]
+        return [recur_json_loads(i) for i in data]
     elif isinstance(data, tuple):
-        return tuple([recursively_json_loads(i) for i in data])
+        return tuple([recur_json_loads(i) for i in data])
     elif isinstance(data, dict):
-        return Storage({recursively_json_loads(k): recursively_json_loads(data[k]) for k in data.keys()})
+        return Storage({recur_json_loads(k): recur_json_loads(v) for k, v in data.items()})
     else:
         try:
             obj = json.loads(data)
             if obj == data:
                 return data
-            return recursively_json_loads(obj)
+            return recur_json_loads(obj)
         except:
             return data
 

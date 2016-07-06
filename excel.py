@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 from numbers import Number
-try:
-    import xlsxwriter
-    import xlrd
-except ImportError:
-    xlsxwriter = None
-    xlrd = None
+import xlsxwriter
+import xlrd
 
 try:
     basestring
