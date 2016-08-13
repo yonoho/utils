@@ -12,7 +12,10 @@ Modified origin's `acquire` and `__enter__` methods, make it possible to use `ti
 
     from utils.redis_lock import Lock
 
-    lock = Lock(StrictRedis(), 'name-of-the-lock', expire=5, auto_renewal=True)
+    lock = Lock(StrictRedis(), 'name-of-the-lock', expire=5)
 
     with lock.acquire(timeout=3):
-        pass
+        # this with statement will block up to 3 seconds before raise a NotAcquired error,
+        # and the codes below will not have the chance to run.
+        print('successfully acquired the lock witin 3 seconds.')
+        print('And the lock will exprire in 5 seconds.')
