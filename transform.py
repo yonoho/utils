@@ -91,7 +91,7 @@ def obj2dict(obj, datetime_format=None):
         return obj
 
 
-def dict_project(data, map_rulls={}):
+def dict_project(data, map_rules={}):
     """
     字典投影，支持取 data 的子集和改名。只想投影而不想改名的，写个 1 就行，eg：
     >>> data = {
@@ -99,21 +99,21 @@ def dict_project(data, map_rulls={}):
     ...     'b': 'value of b',
     ...     'c': 'value of c',
     ... }
-    >>> map_rulls = {
+    >>> map_rules = {
     ...     'a': 'x',
     ... }
-    >>> dict_project(data, map_rulls)
+    >>> dict_project(data, map_rules)
     <Storage {'x': 'value of a'}>
-    >>> map_rulls = {
+    >>> map_rules = {
     ...     'c': 1
     ... }
-    >>> dict_project(data, map_rulls)
+    >>> dict_project(data, map_rules)
     <Storage {'c': 'value of c'}>
     """
     if isinstance(data, dict):
-        data = Storage({map_rulls[k] if isinstance(map_rulls[k], basestring) else k: data[k] for k in data if k in map_rulls})
+        data = Storage({map_rules[k] if isinstance(map_rules[k], basestring) else k: data[k] for k in data if k in map_rules})
     elif isinstance(data, (list, tuple)):
-        return [dict_project(o, map_rulls) for o in data]
+        return [dict_project(o, map_rules) for o in data]
     else:
         raise ValueError('无法处理对象: %s' % str(data))
     return data
