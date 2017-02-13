@@ -113,5 +113,6 @@ class FileDict(dict):
 
     def save(self):
         with open(self._file_path, 'w') as f:
-            json.dump(self, f)
+            json.dump(self, f, sort_keys=True, indent=4)
+            f.write('\n')
         return self
