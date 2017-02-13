@@ -99,21 +99,19 @@ class TimedReFilter(object):
                         yield (pattern, line, result)
 
 
-def set_offset_record(record_dict, file_path):
-    """覆盖式写文件"""
-    with open(file_path, 'w') as f:
-        json.dump(record_dict, f)
-    return record_dict
+class OffsetRecord(dict):
+    def __init__(self, file_path):
+        self._file_path = file_path
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as f:
+                try:
+                    record = json.load(f)
+                except:
+                    pass
+                else:
+                    self.update(record)
 
-
-def get_offset_record(file_path):
-    """读取 record 文件内的全部记录"""
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as f:
-            try:
-                record = json.load(f)
-            except:
-                record = {}
-    else:
-        record = {}
-    return record
+    def save(self):
+        with open(self._file_path, 'w') as f:
+            json.dump(self, f)
+        return self
