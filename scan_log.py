@@ -99,7 +99,7 @@ class TimedReFilter(object):
                         yield (pattern, line, result)
 
 
-class OffsetRecord(dict):
+class FileDict(dict):
     def __init__(self, file_path):
         self._file_path = file_path
         if os.path.exists(file_path):
