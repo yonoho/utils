@@ -37,14 +37,11 @@ class LogScanner(object):
         with open(self.file_path, 'r') as f:
             self.file = f
             f.seek(self.offset_bytes, 0)
-            # for line in f:  # 使用 next/__next__ 时无法使用 file.tell
-            #     yield line
-            #     self._refresh_offset()
             while True:
                 line = f.readline()
+                self._refresh_offset()
                 if line:
                     yield line
-                    self._refresh_offset()
                 else:
                     break
 
