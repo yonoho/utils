@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import datetime
 from copy import deepcopy
 from numbers import Number
@@ -9,54 +8,22 @@ try:
 except ImportError:
     ObjectId = None
 
-from .structure import Storage
-
 try:
     basestring
 except NameError:
     basestring = str
 
 __all__ = [
-    'recur_json_loads',
     'obj2dict',
     'dict_project',
-    'group_by_attr',
+    'group_by_key',
+    'group_by_keys',
+    'merge_dicts',
     'traversal_generator',
     'check_bin',
     'update_bin',
     'filter_bin',
 ]
-
-
-def recur_json_loads(data):
-    """
-    将 json 字符串递归处理为 Python 对象，并且转换为 Storage 类型
-    >>> a = '{"foo": 1}'
-    >>> b = recur_json_loads(a)
-    >>> b.foo
-    1
-
-    还有一个问题是，json 无法还原字典中 Number 类型的 key，本函数可以.即
-    >>> a = {1: 2}
-    >>> json.loads(json.dumps(a))
-    {'1': 2}
-    >>> recur_json_loads(json.dumps({1: 2}))
-    <Storage {1: 2}>
-    """
-    if isinstance(data, list):
-        return [recur_json_loads(i) for i in data]
-    elif isinstance(data, tuple):
-        return tuple([recur_json_loads(i) for i in data])
-    elif isinstance(data, dict):
-        return Storage({recur_json_loads(k): recur_json_loads(v) for k, v in data.items()})
-    else:
-        try:
-            obj = json.loads(data)
-            if obj == data:
-                return data
-            return recur_json_loads(obj)
-        except:
-            return data
 
 
 def obj2dict(obj, datetime_format=None):
@@ -65,7 +32,7 @@ def obj2dict(obj, datetime_format=None):
     """
     # iter collection
     if isinstance(obj, dict):
-        return Storage({obj2dict(k, datetime_format): obj2dict(v, datetime_format) for k, v in obj.items()})
+        return {obj2dict(k, datetime_format): obj2dict(v, datetime_format) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
         return [obj2dict(m, datetime_format) for m in obj]
     # json seriable
@@ -103,15 +70,15 @@ def dict_project(data, map_rules={}):
     ...     'a': 'x',
     ... }
     >>> dict_project(data, map_rules)
-    <Storage {'x': 'value of a'}>
+    {'x': 'value of a'}
     >>> map_rules = {
     ...     'c': 1
     ... }
     >>> dict_project(data, map_rules)
-    <Storage {'c': 'value of c'}>
+    {'c': 'value of c'}
     """
     if isinstance(data, dict):
-        data = Storage({map_rules[k] if isinstance(map_rules[k], basestring) else k: data[k] for k in data if k in map_rules})
+        data = {map_rules[k] if isinstance(map_rules[k], basestring) else k: data[k] for k in data if k in map_rules}
     elif isinstance(data, (list, tuple)):
         return [dict_project(o, map_rules) for o in data]
     else:
@@ -119,15 +86,56 @@ def dict_project(data, map_rules={}):
     return data
 
 
-def group_by_attr(obj_list, attr):
+def group_by_key(dict_list, key):
     """
-    按属性分组，返回以属性值为键，以 obj list 为值的字典
+    >>> data = [
+    ...     {'a': 1, 'b': 2},
+    ...     {'a': 1, 'b': 3}
+    ... ]
+    >>> group_by_key(data, 'a')
+    {1: [{'a': 1, 'b': 2}, {'a': 1, 'b': 3}]}
+    """
+    grouped = {}
+    for d in dict_list:
+        group_key = d.get(key)
+        grouped.setdefault(group_key, [])
+        grouped[group_key].append(d)
+    return grouped
+
+
+def group_by_keys(dict_list, keys):
+    """
+    >>> data = [
+    ...     {'a': 1, 'b': 2},
+    ...     {'a': 1, 'b': 3}
+    ... ]
+    >>> group_by_keys(data, ['a', 'b'])
+    {(1, 2): [{'a': 1, 'b': 2}], (1, 3): [{'a': 1, 'b': 3}]}
     """
     groups = {}
-    for obj in obj_list:
-        attr_value = getattr(obj, attr, None)
-        groups[attr_value] = groups.get(attr_value, []) + [obj]
+    for d in dict_list:
+        value = tuple((d[k] for k in keys))
+        groups.setdefault(value, [])
+        groups[value].append(d)
     return groups
+
+
+def merge_dicts(dicts):
+    """将一组 dicts 取并集返回，键值冲突处理规则为：
+    1. 优先返回最大的数值
+    2. 若无数值类型，则返回倒数第一个值
+    """
+    total_k = reduce(lambda x, y: x | y.keys(), dicts, {})
+    _d = {}
+    for k in total_k:
+        total_v = [d[k] for d in dicts if k in d]  # 必不为空
+        # 选出最合适的一个
+        numbers_v = [v for v in total_v if isinstance(v, Number)]
+        if numbers_v:
+            _d[k] = max(numbers_v)
+        else:
+            _d[k] = total_v[-1]
+    return _d
 
 
 def traversal_generator(*iterables):
@@ -173,9 +181,9 @@ def update_bin(number, index_pairs):
     """
     for index, value in index_pairs.items():
         if value:
-            number = number | int('1' + '0'*(index-1), 2)
+            number = number | int('1' + '0' * (index - 1), 2)
         else:
-            number = number & int('0' + '1'*(index-1), 2)
+            number = number & int('0' + '1' * (index - 1), 2)
     return number
 
 
@@ -192,7 +200,7 @@ def filter_bin(length, index_pairs):
     [2, 6]
     """
     ret = []
-    for number in range(int('1'*length, 2) + 1):
+    for number in range(int('1' * length, 2) + 1):
         match = True
         for index in index_pairs:
             if len(bin(number)) - index >= 2:  # 位数够

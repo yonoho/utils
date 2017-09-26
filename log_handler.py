@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 import time
 import os
+import logging
 from logging.handlers import BaseRotatingHandler
+from gunicorn.glogging import Logger as GLogger
+from gunicorn import util as gutil
 
 try:
     import codecs
 except ImportError:
     codecs = None
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 class MultiProcessSafeDailyRotatingFileHandler(BaseRotatingHandler):
@@ -52,3 +60,46 @@ class MultiProcessSafeDailyRotatingFileHandler(BaseRotatingHandler):
         except OSError:
             pass
         return stream
+
+
+class RotatingGLogger(GLogger):
+    """将 Gunicorn 的默认 Logger 使用的 Handler 从 FileHandler 改为其他"""
+    def _set_handler(self, log, output, fmt, stream=None):
+        # remove previous gunicorn log handler
+        h = self._get_gunicorn_handler(log)
+        if h:
+            log.handlers.remove(h)
+
+        if output is not None:
+            if output == "-":
+                h = logging.StreamHandler(stream)
+            else:
+                gutil.check_is_writeable(output)
+                h = MultiProcessSafeDailyRotatingFileHandler(output)
+                # make sure the user can reopen the file
+                try:
+                    os.chown(h.baseFilename, self.cfg.user, self.cfg.group)
+                except OSError:
+                    # it's probably OK there, we assume the user has given
+                    # /dev/null as a parameter.
+                    pass
+
+            h.setFormatter(fmt)
+            h._gunicorn = True
+            log.addHandler(h)
+
+
+class SingleLevel(logging.Filter):
+    def __init__(self, level):
+        if isinstance(level, int):
+            self.allow = level
+        elif isinstance(level, basestring):
+            self.allow = getattr(logging, level)
+        else:
+            raise ValueError('Invalid `level` type.')
+
+    def filter(self, record):
+        if record.levelno == self.allow:
+            return True
+        else:
+            return False
